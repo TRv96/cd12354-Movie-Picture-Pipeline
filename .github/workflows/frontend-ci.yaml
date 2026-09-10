@@ -64,10 +64,34 @@ jobs:
     needs:
       - lint
       - test
+    defaults:
+      run:
+        working-directory: starter/frontend
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: starter/frontend/.nvmrc
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-frontend-build-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-build-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+        env:
+          CI: "true"
+
       - name: Build Docker image
-        run: docker build -t movie-picture-frontend:${{ github.sha }} starter/frontend
+        run: docker build -t movie-picture-frontend:${{ github.sha }} .
